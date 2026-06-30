@@ -67,9 +67,35 @@ def signup_view(request):
     
     return render(request, "myapp/signup.html", {"form": form})
 
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, authenticate
 
+@login_required
 def logout_view(request):
     if request.method=="POST":
         logout(request)
         return redirect('signup')
+
+
+def login_view(request):
+    if request.method=="POST":
+        username=request.POST.get("username")
+        password=request.POST.get("password")
+        
+        if username and password:
+            user = authenticate(request, username=username, password=password)
+            if user:
+                login(request, user)
+                return redirect('home_view')
+            else:
+                raise forms.ValidationError("Invalid credentials.")
+        else:
+            return redirect("login")
+        
+
+    return render(request, 'myapp/login.html')
+
+
+def search(request):
+    if request.method=="GET":
+        query = request.GET.get("query", "").strip()
+
