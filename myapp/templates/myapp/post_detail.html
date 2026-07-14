@@ -12,7 +12,9 @@
 <p>{{post.pub_date}}</p>
 <p>{{post.author}}</p>
 <p class="card-text">{{post.content}}</p>
-<button>Edit</button>
+
+<button><a href="{%url 'edit' post.id%}">Edit</a></button>
+
 <button>Delete</button>
 </div>
 {% endif%}

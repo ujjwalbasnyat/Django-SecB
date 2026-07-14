@@ -1,8 +1,9 @@
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Blog
 from .forms import CreatePostForm
 from django.contrib.auth.decorators import login_required
+# from django.db import Q
 
 
 # Create your views here.
@@ -94,8 +95,56 @@ def login_view(request):
 
     return render(request, 'myapp/login.html')
 
-
+from django.db.models import Q
 def search(request):
     if request.method=="GET":
         query = request.GET.get("query", "").strip()
 
+        result = []
+
+        contents = Blog.objects.filter(
+            Q(title__icontains=query) | Q(author__icontains=query))
+            
+
+        # result.append()
+
+        return render(request, "myapp/search.html", 
+                      {
+                          "query" : query,
+                          "results" : contents
+                      })
+
+def edit(request, post_id):
+    post = get_object_or_404(Blog, pk=post_id)
+    if request.method=="POST":
+        form = CreatePostForm(request.POST, instance=post)
+        if form.is_valid():
+            form.save()
+            return redirect('post_detail', id=post_id)
+        
+    else:
+        form=CreatePostForm(instance=post)
+    
+    return render(request, 'myapp/edit_page.html', {"form": form})
+
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
+from django.contrib import messages
+
+@login_required
+def settings(request):
+    return render(request, "myapp/settings.html", {"user": request.user})
+
+@login_required
+def password_change(request):
+    if request.method=="POST":
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success("password changes successfully.")
+            return redirect('password_change_done')
+    else:
+        form = PasswordChangeForm(request.user)
+    
+    return render(request, "myapp/password_change.html", {"form": form})
